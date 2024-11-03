@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coefficient of Discharge Calculator</title>
+    <style>
+        /* Gradient background */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #007acc, #00a8cc); /* Light blue gradient */
+            color: #333;
+            text-align: center;
+        }
+        
+        /* Title styling */
+        h1, h2 {
+            color: #fff;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Section styling */
+        .section {
+            margin-bottom: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        
+        /* Formula container styling */
+        .formulas {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Label and input styling */
+        label, input {
+            display: block;
+            margin: 10px 0;
+            text-align: left;
+        }
+        
+        /* Input field styling */
+        input[type="text"] {
+            padding: 8px;
+            width: calc(100% - 20px);
+            margin: 0 auto;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        
+        /* Button styling */
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #007acc;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+        
+        /* Button hover effect */
+        button:hover {
+            background-color: #005f99;
+        }
+    </style>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+    <h1>Fluid Measurement and Discharge Calculator</h1>
+
+    <h2>Formulas Used</h2>
+    <div class="formulas">
+        <p><strong>Measurement Tank Calculations</strong></p>
+        <ul>
+            <li><strong>Difference in Height (h):</strong> \( h = h_2 - h_1 \)</li>
+            <li><strong>Actual Discharge (Q<sub>actual</sub>):</strong> \( Q_{actual} = \frac{A \cdot h}{t} \)</li>
+            <li><strong>Average Discharge:</strong> \( \text{Average } Q_{actual} = \frac{\sum Q_{actual}}{\text{number of readings}} \)</li>
+        </ul>
+
+        <p><strong>Manometer Difference Calculations</strong></p>
+        <ul>
+            <li><strong>Difference in Manometer Height (R):</strong> \( R = H_2 - H_1 \)</li>
+            <li><strong>Converted Head Difference (H):</strong> \( H = R \cdot \left( \frac{\rho_m}{\rho_f} - 1 \right) \)</li>
+            <li><strong>Theoretical Discharge (Q<sub>theoretical</sub>):</strong> \( Q_{theoretical} = A_1 \cdot A_2 \cdot \sqrt{\frac{2 \cdot g \cdot H}{A_1^2 - A_2^2}} \)</li>
+            <li><strong>Coefficient of Discharge (C<sub>d</sub>):</strong> \( C_d = \frac{Q_{actual}}{Q_{theoretical}} \)</li>
+        </ul>
+    </div>
+
+    <h2>Measurement Tank Calculations</h2>
+    <div class="section" id="measurement-tank-section">
+        <label for="h1">Initial Level (h1) [cm]:</label>
+        <input type="text" id="h1" required>
+        <label for="h2">Final Level (h2) [cm]:</label>
+        <input type="text" id="h2" required>
+        <label for="time">Time (t) [s]:</label>
+        <input type="text" id="time" required>
+        <label for="area">Cross-sectional Area (A) [cm²]:</label>
+        <input type="text" id="area" required>
+
+        <button onclick="addMeasurementTankReading()">Add Reading</button>
+        <button onclick="calculateAverageDischarge()">Calculate Average Discharge</button>
+        
+        <div id="measurement-results"></div>
+    </div>
+
+    <h2>Manometer Difference Calculations</h2>
+    <div class="section" id="manometer-section">
+        <label for="H1">Initial Manometer Level (H1) [cm of Hg]:</label>
+        <input type="text" id="H1" required>
+        <label for="H2">Final Manometer Level (H2) [cm of Hg]:</label>
+        <input type="text" id="H2" required>
+        <label for="densityM">Density of Manometer Fluid (ρ<sub>m</sub>) [g/cm³]:</label>
+        <input type="text" id="densityM" required>
+        <label for="densityF">Density of Working Fluid (ρ<sub>f</sub>) [g/cm³]:</label>
+        <input type="text" id="densityF" required>
+        <label for="A1">Inlet Area (A1) [cm²]:</label>
+        <input type="text" id="A1" required>
+        <label for="A2">Throat Area (A2) [cm²]:</label>
+        <input type="text" id="A2" required>
+
+        <button onclick="calculateManometer()">Calculate Discharge Coefficient</button>
+        
+        <div id="manometer-results"></div>
+    </div>
+
+    <script>
+        // JavaScript to handle input collection and calculations
+
+        let tankReadings = [];
+
+        function addMeasurementTankReading() {
+            const h1 = parseFloat(document.getElementById('h1').value);
+            const h2 = parseFloat(document.getElementById('h2').value);
+            const time = parseFloat(document.getElementById('time').value);
+            const area = parseFloat(document.getElementById('area').value);
+
+            if (isNaN(h1) || isNaN(h2) || isNaN(time) || isNaN(area) || time <= 0 || area <= 0) {
+                alert("Please enter valid, non-zero numeric values for all fields.");
+                return;
+            }
+
+            const h = h2 - h1;
+            const Q_actual = (area * h) / time;
+
+            tankReadings.push(Q_actual);
+            document.getElementById('measurement-results').innerHTML += `Reading: ${Q_actual.toFixed(2)} cm³/s<br>`;
+        }
+
+        function calculateAverageDischarge() {
+            if (tankReadings.length === 0) {
+                alert("No readings available. Please add a reading first.");
+                return;
+            }
+
+            const sum = tankReadings.reduce((acc, curr) => acc + curr, 0);
+            const average = sum / tankReadings.length;
+            document.getElementById('measurement-results').innerHTML += `Average Discharge: ${average.toFixed(2)} cm³/s<br>`;
+        }
+
+        function calculateManometer() {
+            const H1 = parseFloat(document.getElementById('H1').value);
+            const H2 = parseFloat(document.getElementById('H2').value);
+            const densityM = parseFloat(document.getElementById('densityM').value);
+            const densityF = parseFloat(document.getElementById('densityF').value);
+            const A1 = parseFloat(document.getElementById('A1').value);
+            const A2 = parseFloat(document.getElementById('A2').value);
+
+            if (isNaN(H1) || isNaN(H2) || isNaN(densityM) || isNaN(densityF) || isNaN(A1) || isNaN(A2) || densityF <= 0 || A1 <= 0 || A2 <= 0) {
+                alert("Please enter valid numeric values for all fields.");
+                return;
+            }
+
+            const R = H2 - H1;
+            const H = R * ((densityM / densityF) - 1);
+            const g = 981; // cm/s², converted from 9.81 m/s²
+
+            const Q_theoretical = A1 * A2 * Math.sqrt((2 * g * H) / (A1 ** 2 - A2 ** 2));
+            const C_d = tankReadings.length > 0 ? (tankReadings[0] / Q_theoretical) : 0;
+
+            document.getElementById('manometer-results').innerHTML = `
+                R: ${R.toFixed(2)} cm<br>
+                H: ${H.toFixed(2)} cm<br>
+                Theoretical Discharge: ${Q_theoretical.toFixed(2)} cm³/s<br>
+                Coefficient of Discharge (C_d): ${C_d.toFixed(2)}
+            `;
+        }
+    </script>
+
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+</body>
+</html>
